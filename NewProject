@@ -1,0 +1,87 @@
+#!/bin/bash
+
+
+#case when number of arguments is 3
+if [[ $# -eq 2 ]]; then
+	path=$1
+	project_name=$2
+	if [ -d $path ]; then
+		#create folders
+		mkdir -p ~/$path/$project_name
+		mkdir -p ~/$path/$project_name/docs
+		mkdir -p ~/$path/$project_name/source
+		mkdir -p ~/$path/$project_name/backup
+		mkdir -p ~/$path/$project_name/archive
+		cp_path=~/$path/$project_name
+	else
+		echo "Your path name is malformed. Type in: NewProject path project_name"
+		exit
+	fi
+#case when number of arguments is 2
+elif [[ $# -eq 1 ]]; then
+	project_name=$1
+	#check for missing project name
+	if [ -d $project_name ]; then
+		echo "Project name is missing. Type in: New Project path project_name"
+		exit
+	fi
+	#create folders
+	mkdir ./$project_name
+	mkdir -p ./$project_name/docs
+	mkdir -p ./$project_name/source
+	mkdir -p ./$project_name/backup
+	mkdir -p ./$project_name/archive
+	cp_path=$project_name
+else
+	echo "Project name is missing. Type in: New Project path project_name"
+	exit
+fi
+
+#make new script compile for c files directly in folder
+cat > $PWD/$cp_path/source/compile << EOT
+#!/bin/bash
+cp_path=../backup
+#case -o argument is called
+	if  [[ \$1 == "-o" ]]; then
+		if [[ \$# -ge 3 ]]; then
+			numParameter=$#
+			file_names=()
+			executable_name=\$2
+			#get array of filenames to compile
+			for file_name in "\$@"
+			do
+				if ! [[ \$file_name == "-o" || ! -f \$file_name ]]; then
+					file_names+=("\$file_name")
+					cp \$file_name \$cp_path
+				fi
+			done
+
+			gcc -o \$executable_name \${file_names[@]} 2> errors
+
+		else
+			echo "You are missing file names. Type in: compile -o executable_name file_name(s)"
+			exit
+		fi
+	#case just filename
+	else
+		numParameter=\$#
+		file_names=()
+
+		for file_name in "\$@"
+		do
+			if ! [[ \$file_name == "-o" || ! -f \$file_name ]]; then
+				file_names+=("\$file_name")
+				cp \$file_name \$cp_path
+			fi
+		done
+		
+		gcc \${file_names[@]} 2> errors
+	fi
+	more errors
+EOT
+chmod u+x ./$cp_path/source/compile
+
+
+
+
+
